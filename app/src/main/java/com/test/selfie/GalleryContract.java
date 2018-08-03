@@ -1,22 +1,12 @@
 package com.test.selfie;
 
-import android.os.Bundle;
-
 public interface GalleryContract {
 
     interface View {
-
-        void startCameraActivity();
-        void startCropActivity();
-
-
+        void showError(String error);
     }
 
     interface Presenter {
-
-        void checkCameraPermission();
-        void checkExternalStoragePermission();
-        void extractImageFromResult(Bundle data);
 
     }
 }
