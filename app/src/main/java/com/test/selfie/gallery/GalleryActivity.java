@@ -1,9 +1,9 @@
-package com.test.selfie;
+package com.test.selfie.gallery;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,30 +13,43 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Base64;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 
+import com.test.selfie.BuildConfig;
+import com.test.selfie.R;
+import com.test.selfie.domain.model.Picture;
 import com.test.selfie.utils.SdkUtils;
 import com.theartofdev.edmodo.cropper.CropImage;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class GalleryActivity extends AppCompatActivity implements GalleryContract.View {
 
-    private Uri mTempFileUri;
-
     private final static int CAMERA_PERMISSION_REQUEST_CODE = 1;
     private final static int CAMERA_REQUEST_CODE = 2;
 
-    //@BindView(R.id.fabNewPicture_gallery) FloatingActionButton mFabNewPicture;
+    @BindView(R.id.recyclerPictures_gallery) RecyclerView mRecyclerPictures;
+    @BindView(R.id.imgNoContent_gallery) ImageView mImgNoContent;
+
+    private Uri mTempFileUri;
+    private ProgressDialog mProgress;
 
     private GalleryContract.Presenter mPresenter;
 
@@ -45,12 +58,35 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
         ButterKnife.bind(this);
+        setUpActionBar();
+        setUpRecycleView();
 
-        mPresenter = new GalleryPresenter(this);
+        mPresenter = new GalleryPresenter(this, getPreferences(MODE_PRIVATE));
+        mPresenter.loadPictures();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home: {
+                finish();
+                return true;
+            }
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
     protected void onDestroy() {
+        if (mProgress != null) {
+            // To avoid window leak
+            mProgress.dismiss();
+            mProgress = null;
+        }
+
+        mPresenter.destroy();
         mPresenter = null;
         super.onDestroy();
     }
@@ -71,8 +107,15 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
             }
         } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE
                 && resultCode == RESULT_OK) {
-            mTempFileUri = CropImage.getActivityResult(data).getUri();
-
+            try {
+                mTempFileUri = CropImage
+                        .getActivityResult(data)
+                        .getUri();
+                mPresenter.savePicture(getContentResolver()
+                        .openInputStream(mTempFileUri));
+            } catch (FileNotFoundException e) {
+                showError(e.getMessage());
+            }
         }
     }
 
@@ -93,9 +136,50 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
     }
 
     @Override
-    public void showError(String error) {
+    public void showError(@NonNull String error) {
         Snackbar.make(getWindow().getDecorView(), error, Snackbar.LENGTH_LONG)
                 .show();
+    }
+
+    @Override
+    public void showProgress(int stringRes) {
+        if (mProgress == null) {
+            mProgress = new ProgressDialog(this);
+        }
+
+        mProgress.setCancelable(false);
+        mProgress.setMessage(getString(stringRes));
+        mProgress.show();
+    }
+
+    @Override
+    public void hideProgress() {
+        if (mProgress != null) {
+            mProgress.dismiss();
+        }
+    }
+
+    @Override
+    public void showGalleryEmpty(boolean param) {
+        if (param) {
+            mRecyclerPictures.setVisibility(View.GONE);
+            mImgNoContent.setVisibility(View.VISIBLE);
+        } else {
+            mImgNoContent.setVisibility(View.GONE);
+            mRecyclerPictures.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void refreshGallery(@NonNull List<Picture> pictures) {
+        ((GalleryAdapter) mRecyclerPictures.getAdapter())
+                .setPictures(pictures);
+    }
+
+    @Override
+    public void addInGallery(@NonNull Picture picture) {
+        ((GalleryAdapter) mRecyclerPictures.getAdapter())
+                .addPicture(picture);
     }
 
     @OnClick(R.id.fabNewPicture_gallery)
@@ -118,6 +202,26 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         } else {
             startCameraActivity();
         }
+    }
+
+    private void setUpActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void setUpRecycleView() {
+        mRecyclerPictures.setHasFixedSize(false);
+        mRecyclerPictures.addItemDecoration(new CustomItemDecorator(5));
+        mRecyclerPictures.setLayoutManager(new StaggeredGridLayoutManager(2,
+                StaggeredGridLayoutManager.VERTICAL));
+
+        GalleryAdapter adapter = new GalleryAdapter(new ArrayList<>());
+        adapter.setOnItemClickListener((picture, position) -> {
+            //TODO implement something
+        });
+        mRecyclerPictures.setAdapter(adapter);
     }
 
     private void startCameraActivity() {
@@ -153,15 +257,5 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         final  String fileName = "img_".concat(timeStamp);
 
         return File.createTempFile(fileName, ".jpg", directory);
-    }
-
-    private String prepareBitmapToSave(Bitmap bitmap) {
-
-        ByteArrayOutputStream _byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 0, _byteArrayOutputStream);
-
-        String _imageEncoded = Base64.encodeToString(_byteArrayOutputStream.toByteArray(), Base64.DEFAULT);
-
-        return _imageEncoded;
     }
 }
