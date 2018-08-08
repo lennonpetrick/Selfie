@@ -11,7 +11,11 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+        debug {
+            buildConfigField("String", "SERVER_CLIENT_ID", getServerClientId("SERVER_CLIENT_ID_DEBUG"))
+        }
         release {
+            buildConfigField("String", "SERVER_CLIENT_ID", getServerClientId("SERVER_CLIENT_ID_RELEASE"))
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -39,4 +43,10 @@ dependencies {
     implementation "com.theartofdev.edmodo:android-image-cropper:$image_cropper_version"
     implementation "com.google.code.gson:gson:$gson_version"
     implementation "com.google.android.gms:play-services-auth:$play_services_auth_version"
+}
+
+def getServerClientId(String key) {
+    Properties properties = new Properties()
+    properties.load(new FileInputStream(rootProject.file("tokens.properties")))
+    return properties.getProperty(key)
 }

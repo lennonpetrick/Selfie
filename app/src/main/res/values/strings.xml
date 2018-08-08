@@ -3,6 +3,4 @@
 
     <string name="message_gallery_load">Loading pictures</string>
     <string name="message_gallery_save">Saving picture</string>
-
-    <string name="server_client_id">CLIENT_ID</string>
 </resources>
