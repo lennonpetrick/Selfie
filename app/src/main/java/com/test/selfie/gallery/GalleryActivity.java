@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -24,6 +23,7 @@ import android.widget.ImageView;
 import com.test.selfie.BuildConfig;
 import com.test.selfie.R;
 import com.test.selfie.domain.model.Picture;
+import com.test.selfie.utils.MessageUtils;
 import com.test.selfie.utils.SdkUtils;
 import com.theartofdev.edmodo.cropper.CropImage;
 
@@ -137,8 +137,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
 
     @Override
     public void showError(@NonNull String error) {
-        Snackbar.make(getWindow().getDecorView(), error, Snackbar.LENGTH_LONG)
-                .show();
+        MessageUtils.showError(this, error);
     }
 
     @Override
