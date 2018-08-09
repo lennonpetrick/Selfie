@@ -43,6 +43,7 @@ dependencies {
     implementation "com.theartofdev.edmodo:android-image-cropper:$image_cropper_version"
     implementation "com.google.code.gson:gson:$gson_version"
     implementation "com.google.android.gms:play-services-auth:$play_services_auth_version"
+    implementation "com.android.volley:volley:$volley_version"
 }
 
 def getServerClientId(String key) {

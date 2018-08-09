@@ -8,7 +8,9 @@ import android.view.View;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.Scope;
 import com.jakewharton.rxbinding2.view.RxView;
+import com.test.selfie.BuildConfig;
 import com.test.selfie.R;
 import com.test.selfie.gallery.GalleryActivity;
 import com.test.selfie.utils.MessageUtils;
@@ -22,6 +24,8 @@ import io.reactivex.disposables.CompositeDisposable;
 public class LoginActivity extends AppCompatActivity implements LoginContract.View {
 
     private static final int SIGN_IN_REQUEST_CODE = 1;
+
+    private static final String STORAGE_SCOPE = "https://www.googleapis.com/auth/devstorage.read_write";
 
     @BindView(R.id.btnSignIn_login) SignInButton mBtnSignIn;
 
@@ -37,6 +41,8 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         mListenersDisposable = new CompositeDisposable();
         mPresenter = new LoginPresenter(this, GoogleSignIn.getClient(this,
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestScopes(new Scope(STORAGE_SCOPE))
+                        .requestServerAuthCode(BuildConfig.SERVER_CLIENT_ID)
                         .requestEmail()
                         .build()));
 

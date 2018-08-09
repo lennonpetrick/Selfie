@@ -1,4 +1,4 @@
-package com.test.selfie.data;
+package com.test.selfie.domain;
 
 public interface GalleryRepository {
 }
