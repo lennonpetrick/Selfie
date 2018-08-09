@@ -6,6 +6,6 @@ import io.reactivex.Single;
 
 public interface AuthorizationRepository {
 
-    Single<AuthEntity> getAuthorization(String clientId, String clientSecret, String authCode);
+    Single<AuthEntity> getAuthorization();
 
 }

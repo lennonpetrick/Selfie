@@ -8,16 +8,37 @@ import io.reactivex.Single;
 
 public class AuthorizationRepositoryImpl implements AuthorizationRepository {
 
-    private AuthorizationDataSource mDataSource;
+    private static AuthorizationRepository mInstance;
 
-    public AuthorizationRepositoryImpl(AuthorizationDataSource dataSource) {
+    private AuthorizationDataSource mDataSource;
+    private String mClientId,
+                   mClientSecret,
+                   mAuthCode;
+
+    public static AuthorizationRepository getInstance(String clientId,
+                                               String clientSecret,
+                                               String authCode,
+                                               AuthorizationDataSource dataSource) {
+        if (mInstance == null) {
+            mInstance = new AuthorizationRepositoryImpl(clientId, clientSecret,
+                    authCode, dataSource);
+        }
+
+        return mInstance;
+    }
+
+    private AuthorizationRepositoryImpl(String clientId,
+                                       String clientSecret,
+                                       String authCode,
+                                       AuthorizationDataSource dataSource) {
+        this.mClientId = clientId;
+        this.mClientSecret = clientSecret;
+        this.mAuthCode = authCode;
         this.mDataSource = dataSource;
     }
 
     @Override
-    public Single<AuthEntity> getAuthorization(String clientId,
-                                               String clientSecret,
-                                               String authCode) {
-        return mDataSource.getAuthorization(clientId, clientSecret, authCode);
+    public Single<AuthEntity> getAuthorization() {
+        return mDataSource.getAuthorization(mClientId, mClientSecret, mAuthCode);
     }
 }

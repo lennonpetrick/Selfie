@@ -82,8 +82,11 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
     }
 
     @Override
-    public void startGalleryActivity() {
-        startActivity(new Intent(this, GalleryActivity.class));
+    public void startGalleryActivity(String oauthCode) {
+        Intent intent = new Intent(this, GalleryActivity.class);
+        intent.putExtra(GalleryActivity.OAUTH_CODE_EXTRA, oauthCode);
+
+        startActivity(intent);
         finish();
     }
 

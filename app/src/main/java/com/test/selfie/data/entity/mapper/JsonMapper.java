@@ -19,4 +19,8 @@ public class JsonMapper {
         return GsonSingleton.getGson().fromJson(json, type);
     }
 
+    public static PictureEntity transformPictureEntity(String json) {
+        return GsonSingleton.getGson().fromJson(json, PictureEntity.class);
+    }
+
 }

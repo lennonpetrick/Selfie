@@ -1,14 +1,14 @@
 package com.test.selfie.gallery;
 
-import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
+import com.android.volley.toolbox.NetworkImageView;
 import com.test.selfie.R;
+import com.test.selfie.application.AppController;
 import com.test.selfie.domain.model.Picture;
 
 import java.util.List;
@@ -36,14 +36,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Picture picture = mPictures.get(position);
-
-        if (picture.getBitmap() == null) {
-            final byte[] data = picture.getData();
-            picture.setBitmap(BitmapFactory
-                    .decodeByteArray(data, 0, data.length));
-        }
-
-        holder.mImgPicture.setImageBitmap(picture.getBitmap());
+        holder.loadImageUrl(picture.getPath());
     }
 
     @Override
@@ -71,7 +64,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
-        @BindView(R.id.imgPicture_gallery) ImageView mImgPicture;
+        @BindView(R.id.imgPicture_gallery) NetworkImageView mImgPicture;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -80,6 +73,14 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
                 final int position = getAdapterPosition();
                 mOnItemClickListener.onItemClick(mPictures.get(position), position);
             });
+        }
+
+        public void loadImageUrl(String url) {
+            mImgPicture.setImageUrl(url, AppController
+                    .getInstance()
+                    .getImageLoader());
+            mImgPicture.setDefaultImageResId(android.R.drawable.ic_menu_camera);
+            mImgPicture.setErrorImageResId(android.R.drawable.ic_menu_camera);
         }
     }
 }

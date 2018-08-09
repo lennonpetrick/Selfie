@@ -51,7 +51,7 @@ public class LoginPresenter implements LoginContract.Presenter {
         if (account == null) {
             mView.showSignInButtonVisible();
         } else {
-            mView.startGalleryActivity();
+            mView.startGalleryActivity(account.getServerAuthCode());
         }
     }
 

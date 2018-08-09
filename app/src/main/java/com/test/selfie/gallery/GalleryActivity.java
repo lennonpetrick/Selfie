@@ -22,7 +22,14 @@ import android.widget.ImageView;
 
 import com.test.selfie.BuildConfig;
 import com.test.selfie.R;
+import com.test.selfie.data.datasource.authorization.CloudAuthorizationDataSource;
+import com.test.selfie.data.datasource.gallery.CloudGalleryDataSource;
+import com.test.selfie.data.repository.AuthorizationRepositoryImpl;
+import com.test.selfie.data.repository.GalleryRepositoryImpl;
+import com.test.selfie.domain.AuthorizationRepository;
 import com.test.selfie.domain.model.Picture;
+import com.test.selfie.domain.usecase.GalleryUseCase;
+import com.test.selfie.domain.usecase.GalleryUseCaseImpl;
 import com.test.selfie.utils.MessageUtils;
 import com.test.selfie.utils.SdkUtils;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -42,12 +49,15 @@ import butterknife.OnClick;
 
 public class GalleryActivity extends AppCompatActivity implements GalleryContract.View {
 
+    public final static String OAUTH_CODE_EXTRA = "oauth_code_extra";
+
     private final static int CAMERA_PERMISSION_REQUEST_CODE = 1;
     private final static int CAMERA_REQUEST_CODE = 2;
 
     @BindView(R.id.recyclerPictures_gallery) RecyclerView mRecyclerPictures;
     @BindView(R.id.imgNoContent_gallery) ImageView mImgNoContent;
 
+    private String mTempFileName;
     private Uri mTempFileUri;
     private ProgressDialog mProgress;
 
@@ -61,7 +71,22 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         setUpActionBar();
         setUpRecycleView();
 
-        mPresenter = new GalleryPresenter(this, getPreferences(MODE_PRIVATE));
+        String oauthCode = null;
+        Intent intent = getIntent();
+        if (intent != null) {
+            oauthCode = intent.getStringExtra(OAUTH_CODE_EXTRA);
+        }
+
+        AuthorizationRepository authRepository = AuthorizationRepositoryImpl.getInstance(
+                BuildConfig.SERVER_CLIENT_ID,
+                BuildConfig.SERVER_CLIENT_SECRET,
+                oauthCode,
+                new CloudAuthorizationDataSource());
+
+        GalleryUseCase useCase = new GalleryUseCaseImpl(
+                new GalleryRepositoryImpl(new CloudGalleryDataSource()), authRepository);
+
+        mPresenter = new GalleryPresenter(this, useCase);
         mPresenter.loadPictures();
     }
 
@@ -111,8 +136,8 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                 mTempFileUri = CropImage
                         .getActivityResult(data)
                         .getUri();
-                mPresenter.savePicture(getContentResolver()
-                        .openInputStream(mTempFileUri));
+                mPresenter.savePicture(mTempFileName,
+                        getContentResolver().openInputStream(mTempFileUri));
             } catch (FileNotFoundException e) {
                 showError(e.getMessage());
             }
@@ -177,6 +202,10 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
 
     @Override
     public void addInGallery(@NonNull Picture picture) {
+        if (mRecyclerPictures.getVisibility() == View.GONE) {
+            showGalleryEmpty(false);
+        }
+
         ((GalleryAdapter) mRecyclerPictures.getAdapter())
                 .addPicture(picture);
     }
@@ -229,10 +258,13 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
             if (intent.resolveActivity(getPackageManager()) != null) {
 
                 if (SdkUtils.isNougat()) {
+                    File tempFile = createTempFile();
+                    mTempFileName = tempFile.getName();
                     mTempFileUri = FileProvider.getUriForFile(this,
-                            BuildConfig.APPLICATION_ID.concat(".provider"), createTempFile());
+                            BuildConfig.APPLICATION_ID.concat(".provider"), tempFile);
                 } else {
                     mTempFileUri = CropImage.getCaptureImageOutputUri(this);
+                    mTempFileName = createTempFileName();
                 }
 
                 if (mTempFileUri != null) {
@@ -251,10 +283,12 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                 "Selfie");
         directory.mkdirs();
 
+        return File.createTempFile(createTempFileName(), ".jpg", directory);
+    }
+
+    private String createTempFileName() {
         final String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
                 Locale.getDefault()).format(new Date());
-        final  String fileName = "img_".concat(timeStamp);
-
-        return File.createTempFile(fileName, ".jpg", directory);
+        return "img_".concat(timeStamp);
     }
 }

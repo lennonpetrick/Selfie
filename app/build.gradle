@@ -12,10 +12,13 @@ android {
     }
     buildTypes {
         debug {
-            buildConfigField("String", "SERVER_CLIENT_ID", getServerClientId("SERVER_CLIENT_ID_DEBUG"))
+            buildConfigField("String", "SERVER_CLIENT_ID", getToken("SERVER_CLIENT_ID_DEBUG"))
+            buildConfigField("String", "SERVER_CLIENT_SECRET", getToken("SERVER_CLIENT_SECRET_DEBUG"))
         }
         release {
-            buildConfigField("String", "SERVER_CLIENT_ID", getServerClientId("SERVER_CLIENT_ID_RELEASE"))
+            buildConfigField("String", "SERVER_CLIENT_ID", getToken("SERVER_CLIENT_ID_RELEASE"))
+            buildConfigField("String", "SERVER_CLIENT_SECRET", getToken("SERVER_CLIENT_SECRET_RELEASE"))
+
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -46,7 +49,7 @@ dependencies {
     implementation "com.android.volley:volley:$volley_version"
 }
 
-def getServerClientId(String key) {
+def getToken(String key) {
     Properties properties = new Properties()
     properties.load(new FileInputStream(rootProject.file("tokens.properties")))
     return properties.getProperty(key)

@@ -1,21 +1,15 @@
 package com.test.selfie.gallery;
 
-import android.content.SharedPreferences;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.test.selfie.R;
 import com.test.selfie.domain.model.Picture;
+import com.test.selfie.domain.usecase.GalleryUseCase;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -25,15 +19,13 @@ public class GalleryPresenter implements GalleryContract.Presenter {
 
     private GalleryContract.View mView;
     private CompositeDisposable mDisposable;
+    private GalleryUseCase mUseCase;
 
-    private List<Picture> mPictures;
-    private SharedPreferences mPreferences;
-
-    public GalleryPresenter(GalleryContract.View view, SharedPreferences preferences) {
+    public GalleryPresenter(GalleryContract.View view,
+                            GalleryUseCase useCase) {
         mView = view;
+        mUseCase = useCase;
         mDisposable = new CompositeDisposable();
-
-        mPreferences = preferences;
     }
 
     @Override
@@ -43,21 +35,21 @@ public class GalleryPresenter implements GalleryContract.Presenter {
     }
 
     @Override
-    public void savePicture(InputStream stream) {
-        if (stream == null)
+    public void savePicture(@Nullable String name,
+                            @Nullable InputStream stream) {
+        if (stream == null || TextUtils.isEmpty(name))
             return;
 
-        if (mPictures.isEmpty()) {
-            mView.showGalleryEmpty(false);
-        }
-
         mView.showProgress(R.string.message_gallery_save);
-        mDisposable.add(save(stream)
+        mDisposable.add(save(name, stream)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally(() -> mView.hideProgress())
-                .subscribe(picture -> mView.addInGallery(picture),
-                        e -> mView.showError(e.getMessage())));
+                .subscribe(picture -> {
+                    if (picture != null) {
+                        mView.addInGallery(picture);
+                    }
+                }, e -> mView.showError(e.getMessage())));
     }
 
     @Override
@@ -68,51 +60,21 @@ public class GalleryPresenter implements GalleryContract.Presenter {
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally(() -> mView.hideProgress())
                 .subscribe(pictures -> {
-                    mPictures = pictures;
-                    if (mPictures.isEmpty()) {
+                    if (pictures == null) {
                         mView.showGalleryEmpty(true);
                     } else {
                         mView.showGalleryEmpty(false);
-                        mView.refreshGallery(mPictures);
+                        mView.refreshGallery(pictures);
                     }
                 }, e -> mView.showError(e.getMessage())));
     }
 
-    private Single<Picture> save(final InputStream stream) {
-        return Single.create(e -> {
-            Picture picture = new Picture();
-            picture.setData(getBytes(stream));
-            mPictures.add(picture);
-
-            SharedPreferences.Editor editor = mPreferences.edit();
-            editor.putString(Picture.class.getName(), new Gson().toJson(mPictures));
-            editor.apply();
-
-            e.onSuccess(picture);
-        });
+    private Single<Picture> save(String name, InputStream stream) {
+        return mUseCase.uploadPicture(name, stream);
     }
 
-    private Flowable<List<Picture>> fetch() {
-        return Flowable.create(e -> {
-            String json = mPreferences.getString(Picture.class.getName(), "");
-            Type type = new TypeToken<List<Picture>>(){}.getType();
-            List<Picture>  pictures = new Gson().fromJson(json, type);
-            if (pictures == null) {
-                pictures = new ArrayList<>();
-            }
-            e.onNext(pictures);
-            e.onComplete();
-        }, BackpressureStrategy.BUFFER);
-    }
-
-    private byte[] getBytes(InputStream stream) throws IOException {
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int len;
-        while ((len = stream.read(buffer)) != -1) {
-            byteBuffer.write(buffer, 0, len);
-        }
-        return byteBuffer.toByteArray();
+    private Single<List<Picture>> fetch() {
+        return mUseCase.fetchPictures();
     }
 
 }

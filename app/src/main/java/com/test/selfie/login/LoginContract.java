@@ -8,7 +8,7 @@ public interface LoginContract {
     interface View {
         void showSignInButtonVisible();
         void startSignInActivity(Intent intent);
-        void startGalleryActivity();
+        void startGalleryActivity(String oauthCode);
         void showError(String error);
     }
 

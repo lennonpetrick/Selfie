@@ -22,7 +22,8 @@ public interface GalleryContract {
 
     interface Presenter {
         void destroy();
-        void savePicture(@Nullable InputStream stream);
+        void savePicture(@Nullable String name,
+                         @Nullable InputStream stream);
         void loadPictures();
     }
 }
