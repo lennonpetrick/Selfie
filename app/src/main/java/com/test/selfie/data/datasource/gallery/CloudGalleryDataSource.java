@@ -23,7 +23,7 @@ public class CloudGalleryDataSource implements GalleryDataSource {
     public Single<List<PictureEntity>> fetchPictures(final String accessToken) {
         return Single.create(e -> {
             final String url = EndpointUtils.getUrl(ROUTE);
-            JsonObjectRequest request = new JsonObjectRequest(url,null,
+            JsonObjectRequest request = new JsonObjectRequest(url, null,
                     response -> {
                 try {
                     e.onSuccess(JsonMapper
@@ -34,7 +34,7 @@ public class CloudGalleryDataSource implements GalleryDataSource {
             }, e::tryOnError) {
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
-                    return addAuthorizationHeader(super.getHeaders(), accessToken);
+                    return getAuthorizationHeader(accessToken);
                 }
             };
 
@@ -54,7 +54,7 @@ public class CloudGalleryDataSource implements GalleryDataSource {
             params.put("name", name);
 
             final String url = EndpointUtils.getUrl(method.concat(ROUTE), params);
-            JsonObjectRequest request = new JsonObjectRequest(url,null,
+            JsonObjectRequest request = new JsonObjectRequest(url, null,
                     response -> e.onSuccess(JsonMapper
                             .transformPictureEntity(response.toString())), e::tryOnError) {
 
@@ -65,9 +65,9 @@ public class CloudGalleryDataSource implements GalleryDataSource {
 
                 @Override
                 public Map<String, String> getHeaders() throws AuthFailureError {
-                    Map<String, String> params = super.getHeaders();
+                    Map<String, String> params = getAuthorizationHeader(accessToken);
                     params.put("Content-Type", "image/jpeg");
-                    return addAuthorizationHeader(params, accessToken);
+                    return params;
                 }
             };
 
@@ -75,12 +75,8 @@ public class CloudGalleryDataSource implements GalleryDataSource {
         });
     }
 
-    private Map<String, String> addAuthorizationHeader(Map<String, String> params,
-                                                       String accessToken) {
-        if (params == null) {
-            params = new HashMap<>();
-        }
-
+    private Map<String, String> getAuthorizationHeader(String accessToken) {
+        Map<String, String> params = new HashMap<>();
         params.put("Authorization", "Bearer " + accessToken);
         return params;
     }

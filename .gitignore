@@ -45,3 +45,6 @@ captures/
 
 # Mac OS X internal files
 .DS_Store
+
+# Property file containing tokens
+tokens.properties
