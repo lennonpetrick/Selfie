@@ -13,7 +13,7 @@ public interface LoginContract {
     }
 
     interface Presenter {
-        void checkLastLogin(Context context);
+        void silentSignIn(Context context);
         void signIn();
         void handleSignInResult(Intent data);
     }

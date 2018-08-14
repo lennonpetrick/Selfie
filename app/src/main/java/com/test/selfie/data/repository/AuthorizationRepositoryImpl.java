@@ -114,6 +114,6 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
     @VisibleForTesting
     boolean isExpired(AuthEntity entity) {
         return (System.currentTimeMillis() - mInitialExpirationTime)
-                > entity.getTimeExpiration();
+                > (entity.getTimeExpiration() * 1000);
     }
 }

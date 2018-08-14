@@ -8,13 +8,15 @@ import java.util.List;
 
 public class PictureMapper {
 
+    private static final String IMAGE_URL = "https://storage.cloud.google.com/selfie-project-bucket/";
+
     public static Picture transform(PictureEntity entity) {
         if (entity == null)
             return null;
 
         Picture model = new Picture();
         model.setName(entity.getName());
-        model.setPath(entity.getPath());
+        model.setPath("IMAGE_URL" + entity.getName());
         return model;
     }
 

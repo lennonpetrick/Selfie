@@ -22,10 +22,13 @@ public class LoginPresenter implements LoginContract.Presenter {
     }
 
     @Override
-    public void checkLastLogin(Context context) {
-        GoogleSignInAccount account = GoogleSignIn
-                .getLastSignedInAccount(context);
-        checkSignInAccount(account);
+    public void silentSignIn(Context context) {
+        mSignInClient.silentSignIn().addOnCompleteListener(task -> {
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                checkSignInAccount(account);
+            } catch (ApiException ignore) {}
+        });
     }
 
     @Override

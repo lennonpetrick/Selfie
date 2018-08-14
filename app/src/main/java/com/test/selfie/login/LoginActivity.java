@@ -52,7 +52,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
     @Override
     protected void onStart() {
         super.onStart();
-        mPresenter.checkLastLogin(this);
+        mPresenter.silentSignIn(this);
     }
 
     @Override
