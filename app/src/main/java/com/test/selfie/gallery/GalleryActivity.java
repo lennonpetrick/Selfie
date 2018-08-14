@@ -23,6 +23,7 @@ import android.widget.ImageView;
 import com.test.selfie.BuildConfig;
 import com.test.selfie.R;
 import com.test.selfie.data.datasource.authorization.CloudAuthorizationDataSource;
+import com.test.selfie.data.datasource.authorization.LocalAuthorizationDataSource;
 import com.test.selfie.data.datasource.gallery.CloudGalleryDataSource;
 import com.test.selfie.data.repository.AuthorizationRepositoryImpl;
 import com.test.selfie.data.repository.GalleryRepositoryImpl;
@@ -77,11 +78,13 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
             oauthCode = intent.getStringExtra(OAUTH_CODE_EXTRA);
         }
 
-        AuthorizationRepository authRepository = AuthorizationRepositoryImpl.getInstance(
-                BuildConfig.SERVER_CLIENT_ID,
-                BuildConfig.SERVER_CLIENT_SECRET,
-                oauthCode,
-                new CloudAuthorizationDataSource());
+        AuthorizationRepository authRepository = AuthorizationRepositoryImpl
+                .getInstance(
+                        BuildConfig.SERVER_CLIENT_ID,
+                        BuildConfig.SERVER_CLIENT_SECRET,
+                        oauthCode,
+                        new CloudAuthorizationDataSource(),
+                        new LocalAuthorizationDataSource(this));
 
         GalleryUseCase useCase = new GalleryUseCaseImpl(
                 new GalleryRepositoryImpl(new CloudGalleryDataSource()), authRepository);

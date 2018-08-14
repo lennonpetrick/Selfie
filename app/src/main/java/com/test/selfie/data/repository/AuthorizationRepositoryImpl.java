@@ -1,7 +1,8 @@
 package com.test.selfie.data.repository;
 
-import com.google.android.gms.common.util.Strings;
-import com.test.selfie.R;
+import android.support.annotation.VisibleForTesting;
+import android.text.TextUtils;
+
 import com.test.selfie.data.datasource.authorization.AuthorizationDataSource;
 import com.test.selfie.data.entity.AuthEntity;
 import com.test.selfie.data.entity.mapper.JsonMapper;
@@ -23,7 +24,11 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
     private String mClientId,
                    mClientSecret,
                    mAuthCode;
-    private Map<String, String> mCache;
+
+    private long mInitialExpirationTime;
+
+    @VisibleForTesting
+    Map<String, String> mCache;
 
     public static AuthorizationRepository getInstance(String clientId,
                                                       String clientSecret,
@@ -50,9 +55,13 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
         this.mLocalDataSource = localDataSource;
     }
 
+    public static void destroyInstance() {
+        mInstance = null;
+    }
+
     @Override
     public Single<AuthEntity> getAuthorization() {
-        return getStoredAuthorization()
+        return getCachedOrLocalAuthorization()
                 .flatMap((Function<String, SingleSource<AuthEntity>>) s -> {
                     AuthEntity entity = JsonMapper.transformAuthEntity(s);
                     if (entity == null || isExpired(entity)) {
@@ -64,7 +73,7 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
                 });
     }
 
-    private Single<String> getStoredAuthorization() {
+    private Single<String> getCachedOrLocalAuthorization() {
         if (mCache == null)
             return getLocalAuthorization();
 
@@ -78,7 +87,7 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
     private Single<String> getLocalAuthorization() {
         return mLocalDataSource
                 .getAuthorization(mClientId, mClientSecret, mAuthCode)
-                .doAfterSuccess(this::insertAuthEntityJsonIntoCache);
+                .doOnSuccess(this::insertAuthEntityJsonIntoCache);
     }
 
     private Single<String> getRemoteAuthorization() {
@@ -87,10 +96,14 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
                 .flatMap((Function<String, Single<String>>) s -> {
                     insertAuthEntityJsonIntoCache(s);
                     return mLocalDataSource.storeLocalAuthorization(s);
-                });
+                })
+                .doOnSuccess(s -> mInitialExpirationTime = System.currentTimeMillis());
     }
 
     private void insertAuthEntityJsonIntoCache(String authEntityJson) {
+        if (TextUtils.isEmpty(authEntityJson))
+            return;
+
         if (mCache == null) {
             mCache = new LinkedHashMap<>();
         }
@@ -98,7 +111,9 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
         mCache.put(AuthEntity.class.getName(), authEntityJson);
     }
 
-    private boolean isExpired(AuthEntity entity) {
-        return true;
+    @VisibleForTesting
+    boolean isExpired(AuthEntity entity) {
+        return (System.currentTimeMillis() - mInitialExpirationTime)
+                > entity.getTimeExpiration();
     }
 }
