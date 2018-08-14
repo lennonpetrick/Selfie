@@ -2,6 +2,7 @@ package com.test.selfie.data.repository;
 
 import android.support.annotation.VisibleForTesting;
 import android.text.TextUtils;
+import android.util.Pair;
 
 import com.test.selfie.data.datasource.authorization.AuthorizationDataSource;
 import com.test.selfie.data.entity.AuthEntity;
@@ -87,17 +88,22 @@ public class AuthorizationRepositoryImpl implements AuthorizationRepository {
     private Single<String> getLocalAuthorization() {
         return mLocalDataSource
                 .getAuthorization(mClientId, mClientSecret, mAuthCode)
+                .map(pair -> {
+                    mInitialExpirationTime = (long) pair.second;
+                    return (String) pair.first;
+                })
                 .doOnSuccess(this::insertAuthEntityJsonIntoCache);
     }
 
     private Single<String> getRemoteAuthorization() {
         return mRemoteDataSource
                 .getAuthorization(mClientId, mClientSecret, mAuthCode)
-                .flatMap((Function<String, Single<String>>) s -> {
-                    insertAuthEntityJsonIntoCache(s);
-                    return mLocalDataSource.storeLocalAuthorization(s);
-                })
-                .doOnSuccess(s -> mInitialExpirationTime = System.currentTimeMillis());
+                .flatMap((Function<Pair, Single<String>>) pair -> {
+                    final String json = (String) pair.first;
+                    mInitialExpirationTime = (long) pair.second;
+                    insertAuthEntityJsonIntoCache(json);
+                    return mLocalDataSource.storeLocalAuthorization(json, mInitialExpirationTime);
+                });
     }
 
     private void insertAuthEntityJsonIntoCache(String authEntityJson) {

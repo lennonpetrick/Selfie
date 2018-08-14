@@ -2,10 +2,10 @@ package com.test.selfie.data.datasource.gallery;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.test.selfie.EndpointUtils;
 import com.test.selfie.application.AppController;
 import com.test.selfie.data.entity.PictureEntity;
 import com.test.selfie.data.entity.mapper.JsonMapper;
+import com.test.selfie.utils.EndpointUtils;
 
 import org.json.JSONException;
 
@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.reactivex.Single;
+
+import static com.android.volley.Request.Method.POST;
 
 public class CloudGalleryDataSource implements GalleryDataSource {
 
@@ -54,7 +56,7 @@ public class CloudGalleryDataSource implements GalleryDataSource {
             params.put("name", name);
 
             final String url = EndpointUtils.getUrl(method.concat(ROUTE), params);
-            JsonObjectRequest request = new JsonObjectRequest(url, null,
+            JsonObjectRequest request = new JsonObjectRequest(POST, url, null,
                     response -> e.onSuccess(JsonMapper
                             .transformPictureEntity(response.toString())), e::tryOnError) {
 

@@ -124,7 +124,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == CAMERA_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                if (!SdkUtils.isNougat()) {
+                if (!SdkUtils.isNougatOrBigger()) {
                     mTempFileUri = CropImage.getPickImageResultUri(this, data);
                 }
 
@@ -260,7 +260,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (intent.resolveActivity(getPackageManager()) != null) {
 
-                if (SdkUtils.isNougat()) {
+                if (SdkUtils.isNougatOrBigger()) {
                     File tempFile = createTempFile();
                     mTempFileName = tempFile.getName();
                     mTempFileUri = FileProvider.getUriForFile(this,

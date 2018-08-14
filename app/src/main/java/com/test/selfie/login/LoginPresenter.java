@@ -27,7 +27,10 @@ public class LoginPresenter implements LoginContract.Presenter {
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 checkSignInAccount(account);
-            } catch (ApiException ignore) {}
+            } catch (ApiException e) {
+                e.printStackTrace();
+                checkSignInAccount(null);
+            }
         });
     }
 

@@ -3,6 +3,7 @@ package com.test.selfie.gallery;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
+import com.android.volley.VolleyError;
 import com.test.selfie.R;
 import com.test.selfie.domain.model.Picture;
 import com.test.selfie.domain.usecase.GalleryUseCase;
@@ -49,7 +50,14 @@ public class GalleryPresenter implements GalleryContract.Presenter {
                     if (picture != null) {
                         mView.addInGallery(picture);
                     }
-                }, e -> mView.showError(e.getMessage())));
+                }, e -> {
+                    e.printStackTrace();
+                    String error = e.getMessage();
+                    if (e instanceof VolleyError) {
+                        error = new String(((VolleyError) e).networkResponse.data);
+                    }
+                    mView.showError(error);
+                }));
     }
 
     @Override
@@ -66,7 +74,14 @@ public class GalleryPresenter implements GalleryContract.Presenter {
                         mView.showGalleryEmpty(false);
                         mView.refreshGallery(pictures);
                     }
-                }, e -> mView.showError(e.getMessage())));
+                }, e -> {
+                    e.printStackTrace();
+                    String error = e.getMessage();
+                    if (e instanceof VolleyError) {
+                        error = new String(((VolleyError) e).networkResponse.data);
+                    }
+                    mView.showError(error);
+                }));
     }
 
     private Single<Picture> save(String name, InputStream stream) {
