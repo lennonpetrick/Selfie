@@ -1,7 +1,6 @@
 package com.test.selfie.gallery;
 
 import android.Manifest;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -72,6 +71,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         ButterKnife.bind(this);
         setUpActionBar();
         setUpRecycleView();
+        restoreInstanceState(savedInstanceState);
 
         String oauthCode = null;
         Intent intent = getIntent();
@@ -92,6 +92,13 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
 
         mPresenter = new GalleryPresenter(this, useCase);
         mPresenter.loadPictures();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString("mTempFileName", mTempFileName);
+        outState.putParcelable(Uri.class.getName(), mTempFileUri);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -131,8 +138,13 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
 
                 CropImage.activity(mTempFileUri).start(this);
             } else {
-                getContentResolver()
-                        .delete(mTempFileUri, null, null);
+                if (mTempFileUri != null) {
+                    try {
+                        getContentResolver()
+                                .delete(mTempFileUri, null, null);
+                    } catch (IllegalArgumentException ignore) {
+                    }
+                }
             }
         } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE
                 && resultCode == RESULT_OK) {
@@ -246,6 +258,14 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         }
     }
 
+    private void restoreInstanceState(Bundle savedInstanceState) {
+        if (savedInstanceState == null)
+            return;
+
+        mTempFileName = savedInstanceState.getString("mTempFileName");
+        mTempFileUri = savedInstanceState.getParcelable(Uri.class.getName());
+    }
+
     private void setUpActionBar() {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -260,28 +280,9 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                 StaggeredGridLayoutManager.VERTICAL));
 
         GalleryAdapter adapter = new GalleryAdapter(new ArrayList<>());
-        adapter.setItemListener(new GalleryAdapter.ItemListener<Picture>() {
-            @Override
-            public void onClick(Picture object, int position) {
-
-            }
-
-            @Override
-            public void onLongClick(Picture object, int position) {
-                showDeletionDialog(object, position);
-            }
-        });
+        adapter.setItemListener((picture, position) -> mPresenter
+                .deletePicture(picture.getId(), position));
         mRecyclerPictures.setAdapter(adapter);
-    }
-
-    private void showDeletionDialog(final Picture picture, final int position) {
-        new AlertDialog.Builder(this)
-                .setMessage("Deseja deletar a foto " + picture.getTitle() + "?")
-                .setPositiveButton("Sim", (dialog, which) -> {
-                    mPresenter.deletePicture(picture.getId(), position);
-                })
-                .setNegativeButton("Não", null)
-                .show();
     }
 
     private void startCameraActivity() {
@@ -296,7 +297,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                             BuildConfig.APPLICATION_ID.concat(".provider"), tempFile);
                 } else {
                     mTempFileUri = CropImage.getCaptureImageOutputUri(this);
-                    mTempFileName = createTempFileName();
+                    mTempFileName = createTempFileName() + ".jpg";
                 }
 
                 if (mTempFileUri != null) {

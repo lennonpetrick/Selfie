@@ -5,6 +5,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 
 import com.android.volley.toolbox.NetworkImageView;
 import com.test.selfie.R;
@@ -64,35 +65,26 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     }
 
     public interface ItemListener<T> {
-        void onClick(T object, int position);
-        void onLongClick(T object, int position);
+        void onDeleteClick(T object, int position);
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
 
         @BindView(R.id.imgPicture_gallery) NetworkImageView mImgPicture;
+        @BindView(R.id.btnDelete_gallery) ImageButton mBtnDelete;
 
-        public ViewHolder(View itemView) {
+        private ViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
-            itemView.setOnClickListener(v -> {
+            mBtnDelete.setOnClickListener(v -> {
                 if (mItemListener != null) {
                     final int position = getAdapterPosition();
-                    mItemListener.onClick(mPictures.get(position), position);
+                    mItemListener.onDeleteClick(mPictures.get(position), position);
                 }
-            });
-
-            itemView.setOnLongClickListener(v -> {
-                if (mItemListener != null) {
-                    final int position = getAdapterPosition();
-                    mItemListener.onLongClick(mPictures.get(position), position);
-                    return true;
-                }
-                return false;
             });
         }
 
-        public void loadImageUrl(String url) {
+        private void loadImageUrl(String url) {
             mImgPicture.setImageUrl(url, AppController
                     .getInstance()
                     .getImageLoader());
