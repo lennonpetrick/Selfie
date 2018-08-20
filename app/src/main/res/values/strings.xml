@@ -3,4 +3,5 @@
 
     <string name="message_gallery_load">Loading pictures</string>
     <string name="message_gallery_save">Saving picture</string>
+    <string name="message_gallery_delete">Deleting picture</string>
 </resources>

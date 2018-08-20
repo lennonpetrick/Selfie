@@ -1,6 +1,7 @@
 package com.test.selfie.gallery;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -213,6 +214,16 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                 .addPicture(picture);
     }
 
+    @Override
+    public void removeFromGallery(int position) {
+        GalleryAdapter adapter = (GalleryAdapter) mRecyclerPictures.getAdapter();
+        adapter.removePicture(position);
+
+        if (adapter.getItemCount() == 0) {
+            showGalleryEmpty(true);
+        }
+    }
+
     @OnClick(R.id.fabNewPicture_gallery)
     public void checkForPermissions() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -249,10 +260,28 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                 StaggeredGridLayoutManager.VERTICAL));
 
         GalleryAdapter adapter = new GalleryAdapter(new ArrayList<>());
-        adapter.setOnItemClickListener((picture, position) -> {
-            //TODO implement something
+        adapter.setItemListener(new GalleryAdapter.ItemListener<Picture>() {
+            @Override
+            public void onClick(Picture object, int position) {
+
+            }
+
+            @Override
+            public void onLongClick(Picture object, int position) {
+                showDeletionDialog(object, position);
+            }
         });
         mRecyclerPictures.setAdapter(adapter);
+    }
+
+    private void showDeletionDialog(final Picture picture, final int position) {
+        new AlertDialog.Builder(this)
+                .setMessage("Deseja deletar a foto " + picture.getTitle() + "?")
+                .setPositiveButton("Sim", (dialog, which) -> {
+                    mPresenter.deletePicture(picture.getId(), position);
+                })
+                .setNegativeButton("Não", null)
+                .show();
     }
 
     private void startCameraActivity() {

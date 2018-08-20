@@ -5,21 +5,27 @@ import com.google.gson.annotations.SerializedName;
 public class PictureEntity {
 
     private String id;
-    private String name;
+    private String title;
 
-    @SerializedName("mediaLink")
-    private String path;
+    @SerializedName("embedLink")
+    private String url;
+
+    @SerializedName("thumbnailLink")
+    private String thumbnail;
 
     public String getId() {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
-    public String getPath() {
-        return path;
+    public String getUrl() {
+        return url;
     }
 
+    public String getThumbnail() {
+        return thumbnail;
+    }
 }

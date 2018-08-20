@@ -13,13 +13,15 @@ public class PictureMapper {
             return null;
 
         Picture model = new Picture();
-        model.setName(entity.getName());
-        model.setPath(entity.getPath());
+        model.setId(entity.getId());
+        model.setTitle(entity.getTitle());
+        model.setUrl(entity.getUrl());
+        model.setThumbnail(entity.getThumbnail());
         return model;
     }
 
     public static List<Picture> transform(List<PictureEntity> entities) {
-        if (entities == null || entities.isEmpty())
+        if (entities == null)
             return null;
 
         List<Picture> models = new ArrayList<>();

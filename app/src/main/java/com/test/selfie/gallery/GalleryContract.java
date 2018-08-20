@@ -18,6 +18,7 @@ public interface GalleryContract {
         void showGalleryEmpty(boolean param);
         void refreshGallery(@NonNull List<Picture> pictures);
         void addInGallery(@NonNull Picture picture);
+        void removeFromGallery(int position);
     }
 
     interface Presenter {
@@ -25,5 +26,6 @@ public interface GalleryContract {
         void savePicture(@Nullable String name,
                          @Nullable InputStream stream);
         void loadPictures();
+        void deletePicture(@NonNull String pictureId, final int position);
     }
 }

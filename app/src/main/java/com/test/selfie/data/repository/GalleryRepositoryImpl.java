@@ -6,6 +6,7 @@ import com.test.selfie.domain.GalleryRepository;
 
 import java.util.List;
 
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 public class GalleryRepositoryImpl implements GalleryRepository {
@@ -26,5 +27,10 @@ public class GalleryRepositoryImpl implements GalleryRepository {
                                                byte[] imageData,
                                                String accessToken) {
         return mDataSource.uploadPicture(name, imageData, accessToken);
+    }
+
+    @Override
+    public Completable deletePicture(String id, String accessToken) {
+        return mDataSource.deletePicture(id, accessToken);
     }
 }

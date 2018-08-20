@@ -1,8 +1,5 @@
 package com.test.selfie.utils;
 
-import android.content.Context;
-
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -10,14 +7,6 @@ import java.util.HashMap;
 public class EndpointUtils {
 
     private static final String ENDPOINT_URL = "https://www.googleapis.com/";
-
-    public static String generateSignedUrl(Context context, String resourcePath) throws IOException {
-        /*ServiceAccountCredentials accountCredentials = ServiceAccountCredentials
-                .fromStream(context.getResources().openRawResource(R.raw.selfie_project));
-        accountCredentials.sign()*/
-
-        return null;
-    }
 
     public static String getUrl(String route) {
         return getUrl(route, null);

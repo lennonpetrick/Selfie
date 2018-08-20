@@ -18,7 +18,7 @@ import butterknife.ButterKnife;
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
 
-    private OnItemClickListener<Picture> mOnItemClickListener;
+    private ItemListener<Picture> mItemListener;
     private List<Picture> mPictures;
 
     public GalleryAdapter(@NonNull List<Picture> pictures) {
@@ -36,7 +36,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Picture picture = mPictures.get(position);
-        holder.loadImageUrl(picture.getPath());
+        holder.loadImageUrl(picture.getThumbnail());
     }
 
     @Override
@@ -54,12 +54,18 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
         notifyItemInserted(mPictures.size() - 1);
     }
 
-    public void setOnItemClickListener(OnItemClickListener<Picture> onItemClickListener) {
-        this.mOnItemClickListener = onItemClickListener;
+    public void removePicture(int position) {
+        mPictures.remove(position);
+        notifyItemRemoved(position);
     }
 
-    public interface OnItemClickListener<T> {
-        void onItemClick(T object, int position);
+    public void setItemListener(ItemListener<Picture> itemListener) {
+        this.mItemListener = itemListener;
+    }
+
+    public interface ItemListener<T> {
+        void onClick(T object, int position);
+        void onLongClick(T object, int position);
     }
 
     class ViewHolder extends RecyclerView.ViewHolder {
@@ -70,8 +76,19 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ViewHold
             super(itemView);
             ButterKnife.bind(this, itemView);
             itemView.setOnClickListener(v -> {
-                final int position = getAdapterPosition();
-                mOnItemClickListener.onItemClick(mPictures.get(position), position);
+                if (mItemListener != null) {
+                    final int position = getAdapterPosition();
+                    mItemListener.onClick(mPictures.get(position), position);
+                }
+            });
+
+            itemView.setOnLongClickListener(v -> {
+                if (mItemListener != null) {
+                    final int position = getAdapterPosition();
+                    mItemListener.onLongClick(mPictures.get(position), position);
+                    return true;
+                }
+                return false;
             });
         }
 

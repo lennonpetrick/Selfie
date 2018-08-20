@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 public class GalleryUseCaseImpl implements GalleryUseCase {
@@ -38,6 +39,12 @@ public class GalleryUseCaseImpl implements GalleryUseCase {
                 .flatMap(accessToken -> mRepository
                         .uploadPicture(name, getBytes(stream), accessToken)
                         .map(PictureMapper::transform));
+    }
+
+    @Override
+    public Completable deletePicture(String id) {
+        return getAccessToken()
+                .flatMapCompletable(accessToken -> mRepository.deletePicture(id, accessToken));
     }
 
     private Single<String> getAccessToken() {

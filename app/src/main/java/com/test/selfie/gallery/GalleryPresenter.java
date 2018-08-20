@@ -1,7 +1,9 @@
 package com.test.selfie.gallery;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.android.volley.VolleyError;
 import com.test.selfie.R;
@@ -11,6 +13,7 @@ import com.test.selfie.domain.usecase.GalleryUseCase;
 import java.io.InputStream;
 import java.util.List;
 
+import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -56,6 +59,7 @@ public class GalleryPresenter implements GalleryContract.Presenter {
                     if (e instanceof VolleyError) {
                         error = new String(((VolleyError) e).networkResponse.data);
                     }
+                    Log.e("TESTE", error);
                     mView.showError(error);
                 }));
     }
@@ -68,7 +72,7 @@ public class GalleryPresenter implements GalleryContract.Presenter {
                 .observeOn(AndroidSchedulers.mainThread())
                 .doFinally(() -> mView.hideProgress())
                 .subscribe(pictures -> {
-                    if (pictures == null) {
+                    if (pictures.isEmpty()) {
                         mView.showGalleryEmpty(true);
                     } else {
                         mView.showGalleryEmpty(false);
@@ -80,8 +84,28 @@ public class GalleryPresenter implements GalleryContract.Presenter {
                     if (e instanceof VolleyError) {
                         error = new String(((VolleyError) e).networkResponse.data);
                     }
+                    Log.e("TESTE", error);
                     mView.showError(error);
                 }));
+    }
+
+    @Override
+    public void deletePicture(@NonNull String pictureId, final int position) {
+        mView.showProgress(R.string.message_gallery_delete);
+        mDisposable.add(delete(pictureId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doFinally(() -> mView.hideProgress())
+                .subscribe(() -> mView.removeFromGallery(position),
+                        e -> {
+                            e.printStackTrace();
+                            String error = e.getMessage();
+                            if (e instanceof VolleyError) {
+                                error = new String(((VolleyError) e).networkResponse.data);
+                            }
+                            Log.e("TESTE", error);
+                            mView.showError(error);
+                        }));
     }
 
     private Single<Picture> save(String name, InputStream stream) {
@@ -90,6 +114,10 @@ public class GalleryPresenter implements GalleryContract.Presenter {
 
     private Single<List<Picture>> fetch() {
         return mUseCase.fetchPictures();
+    }
+
+    private Completable delete(String id) {
+        return mUseCase.deletePicture(id);
     }
 
 }

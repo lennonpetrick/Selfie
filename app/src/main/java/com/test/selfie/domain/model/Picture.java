@@ -4,22 +4,40 @@ import java.io.Serializable;
 
 public class Picture implements Serializable {
 
-    private String name;
-    private String path;
+    private String id,
+                   title,
+                   url,
+                   thumbnail;
 
-    public String getName() {
-        return name;
+    public String getId() {
+        return id;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public String getPath() {
-        return path;
+    public String getTitle() {
+        return title;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getThumbnail() {
+        return thumbnail;
+    }
+
+    public void setThumbnail(String thumbnail) {
+        this.thumbnail = thumbnail;
     }
 }

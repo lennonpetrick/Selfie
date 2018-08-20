@@ -5,12 +5,13 @@ import com.test.selfie.data.entity.PictureEntity;
 
 import java.util.List;
 
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 public interface GalleryDataSource {
 
     /**
-     * Fetch a list of pictures from Google Storage
+     * Fetches a list of pictures from Google Drive
      *
      * @param accessToken The access token retrieved from {@link AuthorizationDataSource}
      * @return A list of {@link PictureEntity}
@@ -18,7 +19,7 @@ public interface GalleryDataSource {
     Single<List<PictureEntity>> fetchPictures(String accessToken);
 
     /**
-     * Fetch a list of pictures from Google Storage
+     * Uploads a picture into Google Drive
      *
      * @param name The image's name
      * @param imageData The image's data
@@ -26,5 +27,14 @@ public interface GalleryDataSource {
      * @return The object {@link PictureEntity} uploaded
      * */
     Single<PictureEntity> uploadPicture(String name, byte[] imageData, String accessToken);
+
+    /**
+     * Deletes a picture from Google Drive
+     *
+     * @param id The picture's id
+     * @param accessToken The access token retrieved from {@link AuthorizationDataSource}
+     * @return A completable
+     * */
+    Completable deletePicture(String id, String accessToken);
 
 }

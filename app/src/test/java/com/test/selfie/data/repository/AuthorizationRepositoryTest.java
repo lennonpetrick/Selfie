@@ -1,5 +1,7 @@
 package com.test.selfie.data.repository;
 
+import android.util.Pair;
+
 import com.test.selfie.data.datasource.authorization.AuthorizationDataSource;
 import com.test.selfie.data.entity.AuthEntity;
 import com.test.selfie.shared.GsonSingleton;
@@ -18,6 +20,7 @@ import io.reactivex.observers.TestObserver;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -73,16 +76,16 @@ public class AuthorizationRepositoryTest {
 
         when(mRemoteDataSource
                 .getAuthorization(anyString(), anyString(), anyString()))
-                .thenReturn(Single.just(mJsonRemoteEntity));
+                .thenReturn(Single.just(new Pair<>(mJsonRemoteEntity, System.currentTimeMillis())));
 
         when(mLocalDataSource
                 .getAuthorization(anyString(), anyString(), anyString()))
-                .thenReturn(Single.just(""));
+                .thenReturn(Single.just(new Pair<>("", System.currentTimeMillis())));
 
         // Json remote is always returning because storeLocalAuthorization() is only called
         // after getting data from remote
         when(mLocalDataSource
-                .storeLocalAuthorization(anyString()))
+                .storeLocalAuthorization(anyString(), anyLong()))
                 .thenReturn(Single.just(mJsonRemoteEntity));
     }
 
@@ -99,7 +102,7 @@ public class AuthorizationRepositoryTest {
 
         verify(mLocalDataSource).getAuthorization(anyString(), anyString(), anyString());
         verify(mRemoteDataSource).getAuthorization(anyString(), anyString(), anyString());
-        verify(mLocalDataSource).storeLocalAuthorization(anyString());
+        verify(mLocalDataSource).storeLocalAuthorization(anyString(), anyLong());
 
         assertThat(mRepository.mCache.get(AuthEntity.class.getName()), is(mJsonRemoteEntity));
     }
@@ -115,7 +118,7 @@ public class AuthorizationRepositoryTest {
 
         verify(mLocalDataSource, never()).getAuthorization(anyString(), anyString(), anyString());
         verify(mRemoteDataSource, never()).getAuthorization(anyString(), anyString(), anyString());
-        verify(mLocalDataSource, never()).storeLocalAuthorization(anyString());
+        verify(mLocalDataSource, never()).storeLocalAuthorization(anyString(), anyLong());
     }
 
     @Test
@@ -129,7 +132,7 @@ public class AuthorizationRepositoryTest {
 
         verify(mLocalDataSource, never()).getAuthorization(anyString(), anyString(), anyString());
         verify(mRemoteDataSource).getAuthorization(anyString(), anyString(), anyString());
-        verify(mLocalDataSource).storeLocalAuthorization(anyString());
+        verify(mLocalDataSource).storeLocalAuthorization(anyString(), anyLong());
 
         assertThat(mRepository.mCache.get(AuthEntity.class.getName()), is(mJsonRemoteEntity));
     }
@@ -160,14 +163,14 @@ public class AuthorizationRepositoryTest {
 
         verify(mLocalDataSource).getAuthorization(anyString(), anyString(), anyString());
         verify(mRemoteDataSource).getAuthorization(anyString(), anyString(), anyString());
-        verify(mLocalDataSource).storeLocalAuthorization(anyString());
+        verify(mLocalDataSource).storeLocalAuthorization(anyString(), anyLong());
 
         assertThat(mRepository.mCache.get(AuthEntity.class.getName()), is(mJsonRemoteEntity));
     }
 
     private void setLocalAvailable() {
         when(mLocalDataSource.getAuthorization(anyString(), anyString(), anyString()))
-                .thenReturn(Single.just(mJsonLocalEntity));
+                .thenReturn(Single.just(new Pair<>(mJsonLocalEntity, System.currentTimeMillis())));
     }
 
     private void setCacheAvailable() {
