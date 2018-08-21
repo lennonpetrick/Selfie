@@ -1,8 +1,11 @@
 package com.test.selfie.login;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -41,6 +44,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
+        setUpActionBar();
 
         mListenersDisposable = new CompositeDisposable();
         mSignInClient = GoogleSignIn.getClient(this,
@@ -54,6 +58,19 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         mPresenter = new LoginPresenter(this);
         silentSignIn();
         setListeners();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home: {
+                onBackPressed();
+                return true;
+            }
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override
@@ -105,6 +122,13 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         MessageUtils.showError(this, error);
     }
 
+    private void setUpActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
     private void setListeners() {
         mListenersDisposable.add(RxView.clicks(mBtnSignIn)
                 .throttleFirst(1, TimeUnit.SECONDS)
@@ -115,7 +139,13 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
     * I can't test it in the presenter. So putting it here, the presenter is totally testable
     * */
     private void silentSignIn() {
+        final ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setMessage(getString(R.string.message_login_signing_in));
+        dialog.show();
+
         mSignInClient.silentSignIn().addOnCompleteListener(task -> {
+            dialog.dismiss();
+
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 mPresenter.checkSignInAccount(account);

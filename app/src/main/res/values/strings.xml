@@ -1,6 +1,9 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Selfie</string>
     <string name="menu_gallery">GALLERY</string>
+
+    <string name="message_login_signing_in"
+        tools:ignore="TypographyEllipsis">Signing in...</string>
 
     <string name="message_gallery_load">Loading pictures</string>
     <string name="message_gallery_save">Saving picture</string>
