@@ -31,6 +31,7 @@ import com.test.selfie.domain.AuthorizationRepository;
 import com.test.selfie.domain.model.Picture;
 import com.test.selfie.domain.usecase.GalleryUseCase;
 import com.test.selfie.domain.usecase.GalleryUseCaseImpl;
+import com.test.selfie.shared.schedulers.DefaultSchedulers;
 import com.test.selfie.utils.MessageUtils;
 import com.test.selfie.utils.SdkUtils;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -90,7 +91,8 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         GalleryUseCase useCase = new GalleryUseCaseImpl(
                 new GalleryRepositoryImpl(new CloudGalleryDataSource()), authRepository);
 
-        mPresenter = new GalleryPresenter(this, useCase);
+        mPresenter = new GalleryPresenter(this,
+                useCase, DefaultSchedulers.getInstance());
         mPresenter.loadPictures();
     }
 

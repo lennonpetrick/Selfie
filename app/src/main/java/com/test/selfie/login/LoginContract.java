@@ -1,20 +1,18 @@
 package com.test.selfie.login;
 
-import android.content.Context;
-import android.content.Intent;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 
 public interface LoginContract {
 
     interface View {
         void showSignInButtonVisible();
-        void startSignInActivity(Intent intent);
+        void startSignInActivity();
         void startGalleryActivity(String oauthCode);
         void showError(String error);
     }
 
     interface Presenter {
-        void silentSignIn(Context context);
         void signIn();
-        void handleSignInResult(Intent data);
+        void checkSignInAccount(GoogleSignInAccount account);
     }
 }

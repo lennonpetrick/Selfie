@@ -6,10 +6,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.SignInButton;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.tasks.Task;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.test.selfie.BuildConfig;
 import com.test.selfie.R;
@@ -30,6 +34,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
 
     private LoginContract.Presenter mPresenter;
     private CompositeDisposable mListenersDisposable;
+    private GoogleSignInClient mSignInClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,21 +43,17 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         ButterKnife.bind(this);
 
         mListenersDisposable = new CompositeDisposable();
-        mPresenter = new LoginPresenter(this, GoogleSignIn.getClient(this,
+        mSignInClient = GoogleSignIn.getClient(this,
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestScopes(new Scope(Scopes.DRIVE_FILE),
                                 new Scope(Scopes.DRIVE_APPFOLDER))
                         .requestServerAuthCode(BuildConfig.SERVER_CLIENT_ID)
                         .requestEmail()
-                        .build()));
+                        .build());
 
+        mPresenter = new LoginPresenter(this);
+        silentSignIn();
         setListeners();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mPresenter.silentSignIn(this);
     }
 
     @Override
@@ -67,7 +68,16 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == SIGN_IN_REQUEST_CODE) {
-            mPresenter.handleSignInResult(data);
+            try {
+                Task<GoogleSignInAccount> task = GoogleSignIn
+                        .getSignedInAccountFromIntent(data);
+
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                mPresenter.checkSignInAccount(account);
+            } catch (ApiException e) {
+                showError(e.getMessage());
+                mPresenter.checkSignInAccount(null);
+            }
         }
     }
 
@@ -77,8 +87,8 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
     }
 
     @Override
-    public void startSignInActivity(Intent intent) {
-        startActivityForResult(intent, SIGN_IN_REQUEST_CODE);
+    public void startSignInActivity() {
+        startActivityForResult(mSignInClient.getSignInIntent(), SIGN_IN_REQUEST_CODE);
     }
 
     @Override
@@ -100,4 +110,20 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
                 .throttleFirst(1, TimeUnit.SECONDS)
                 .subscribe(o -> mPresenter.signIn()));
     }
+
+    /* This could be in the presenter, but as GoogleSignInClient needs some Android dependencies
+    * I can't test it in the presenter. So putting it here, the presenter is totally testable
+    * */
+    private void silentSignIn() {
+        mSignInClient.silentSignIn().addOnCompleteListener(task -> {
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                mPresenter.checkSignInAccount(account);
+            } catch (ApiException e) {
+                e.printStackTrace();
+                mPresenter.checkSignInAccount(null);
+            }
+        });
+    }
+
 }

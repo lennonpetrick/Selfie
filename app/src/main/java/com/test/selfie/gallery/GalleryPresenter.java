@@ -9,26 +9,28 @@ import com.android.volley.VolleyError;
 import com.test.selfie.R;
 import com.test.selfie.domain.model.Picture;
 import com.test.selfie.domain.usecase.GalleryUseCase;
+import com.test.selfie.shared.schedulers.BaseSchedulers;
 
 import java.io.InputStream;
 import java.util.List;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
 
 public class GalleryPresenter implements GalleryContract.Presenter {
 
     private GalleryContract.View mView;
-    private CompositeDisposable mDisposable;
     private GalleryUseCase mUseCase;
+    private BaseSchedulers mSchedulers;
+    private CompositeDisposable mDisposable;
 
     public GalleryPresenter(GalleryContract.View view,
-                            GalleryUseCase useCase) {
+                            GalleryUseCase useCase,
+                            BaseSchedulers schedulers) {
         mView = view;
         mUseCase = useCase;
+        mSchedulers = schedulers;
         mDisposable = new CompositeDisposable();
     }
 
@@ -46,8 +48,8 @@ public class GalleryPresenter implements GalleryContract.Presenter {
 
         mView.showProgress(R.string.message_gallery_save);
         mDisposable.add(save(name, stream)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(mSchedulers.io())
+                .observeOn(mSchedulers.mainThread())
                 .doFinally(() -> mView.hideProgress())
                 .subscribe(picture -> {
                     if (picture != null) {
@@ -68,8 +70,8 @@ public class GalleryPresenter implements GalleryContract.Presenter {
     public void loadPictures() {
         mView.showProgress(R.string.message_gallery_load);
         mDisposable.add(fetch()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(mSchedulers.io())
+                .observeOn(mSchedulers.mainThread())
                 .doFinally(() -> mView.hideProgress())
                 .subscribe(pictures -> {
                     if (pictures.isEmpty()) {
@@ -93,8 +95,8 @@ public class GalleryPresenter implements GalleryContract.Presenter {
     public void deletePicture(@NonNull String pictureId, final int position) {
         mView.showProgress(R.string.message_gallery_delete);
         mDisposable.add(delete(pictureId)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(mSchedulers.io())
+                .observeOn(mSchedulers.mainThread())
                 .doFinally(() -> mView.hideProgress())
                 .subscribe(() -> mView.removeFromGallery(position),
                         e -> {
