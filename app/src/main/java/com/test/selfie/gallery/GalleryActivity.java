@@ -16,6 +16,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -39,6 +40,7 @@ import com.theartofdev.edmodo.cropper.CropImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -55,6 +57,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
 
     private final static int CAMERA_PERMISSION_REQUEST_CODE = 1;
     private final static int CAMERA_REQUEST_CODE = 2;
+    private final static int GALLERY_REQUEST_CODE = 3;
 
     @BindView(R.id.recyclerPictures_gallery) RecyclerView mRecyclerPictures;
     @BindView(R.id.imgNoContent_gallery) ImageView mImgNoContent;
@@ -104,10 +107,21 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_gallery, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home: {
-                finish();
+                onBackPressed();
+                return true;
+            }
+
+            case R.id.action_gallery: {
+                startGalleryActivity();
                 return true;
             }
 
@@ -132,7 +146,19 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == CAMERA_REQUEST_CODE) {
+        if (requestCode == GALLERY_REQUEST_CODE) {
+            if (resultCode == RESULT_OK && data != null) {
+                try {
+                    Uri uri = data.getData();
+                    if (uri != null) {
+                        InputStream inputStream = getContentResolver().openInputStream(uri);
+                        mPresenter.savePicture(createTempFileName() + ".jpg", inputStream);
+                    }
+                } catch (FileNotFoundException e) {
+                    showError(e.getMessage());
+                }
+            }
+        } else if (requestCode == CAMERA_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
                 if (!SdkUtils.isNougatOrBigger()) {
                     mTempFileUri = CropImage.getPickImageResultUri(this, data);
@@ -144,8 +170,7 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
                     try {
                         getContentResolver()
                                 .delete(mTempFileUri, null, null);
-                    } catch (IllegalArgumentException ignore) {
-                    }
+                    } catch (IllegalArgumentException ignore) {}
                 }
             }
         } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE
@@ -310,6 +335,12 @@ public class GalleryActivity extends AppCompatActivity implements GalleryContrac
         } catch (IOException e) {
             showError(e.getMessage());
         }
+    }
+
+    private void startGalleryActivity() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        startActivityForResult(intent, GALLERY_REQUEST_CODE);
     }
 
     private File createTempFile() throws IOException {
